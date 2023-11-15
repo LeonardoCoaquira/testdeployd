@@ -34,4 +34,10 @@ def api(url):
 
     return response
 
+@app.route("/api/generate_plot/<filename>")
+def generate_plot(filename):
+    csv_path = f'data/{filename}'
+    img_path = generate_plot_image(csv_path)
+    return send_file(img_path, mimetype='image/png')
+
 app.run(host="0.0.0.0")
