@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     <?php if ($img_path): ?>
         <h2>Generated Plot</h2>
-        <img src="<?php echo $img_path; ?>" alt="Generated Plot">
+        <img src="/api/<?php echo $img_path; ?>" alt="Generated Plot">
     <?php endif; ?>
 </body>
 </html>

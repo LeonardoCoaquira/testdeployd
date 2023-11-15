@@ -2,3 +2,4 @@ beautifulsoup4
 flask
 redis
 requests
+pandas
