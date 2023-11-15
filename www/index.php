@@ -1,186 +1,87 @@
 <!DOCTYPE html>
 
 <?php
-  $api_endpoint = $_ENV["API_ENDPOINT"] ?: "http://localhost:5000/api/";
-  $url = "";
-  if(isset($_GET["url"]) && $_GET["url"] != "") {
-    $url = $_GET["url"];
-    $json = @file_get_contents($api_endpoint . $url);
-    if($json == false) {
-      $err = "Something is wrong with the URL: " . $url;
+$api_endpoint = $_ENV["API_ENDPOINT"] ?: "http://localhost:5000/api/";
+$err = "";
+$links = [];    
+$domainct = [];
+$json_data = [];
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_FILES["csv_file"]) && $_FILES["csv_file"]["error"] == 0) {
+        $file_name = $_FILES["csv_file"]["name"];
+        $file_tmp = $_FILES["csv_file"]["tmp_name"];
+
+        if (pathinfo($file_name, PATHINFO_EXTENSION) === "csv") {
+            $csv_data = array_map("str_getcsv", file($file_tmp));
+            $headers = array_shift($csv_data);
+
+            foreach ($csv_data as $row) {
+                $json_data[] = array_combine($headers, $row);
+            }
+
+            $json = json_encode($json_data, JSON_PRETTY_PRINT);
+            $json_param = urlencode($json);
+            
+            $url_with_json = $api_endpoint . $json_param;
+            
+            // Hacer la solicitud a la API y obtener la respuesta HTML
+            $html_response = @file_get_contents($url_with_json);
+            
+            if ($html_response !== false) {
+                // Aquí puedes procesar o mostrar el HTML según tus necesidades
+                echo "Respuesta HTML de la API: " . $html_response;
+            } else {
+                echo "Error al obtener la respuesta HTML de la API.";
+            }
+            
+        } else {
+            $err = "Invalid file format. Please upload a CSV file.";
+        }
     } else {
-      $links = json_decode($json, true);
-      $domains = [];
-      foreach($links as $link) {
-        array_push($domains, parse_url($link["href"], PHP_URL_HOST));
-      }
-      $domainct = @array_count_values($domains);
-      arsort($domainct);
+        $err = "File upload failed. Please try again.";
     }
-  }
+}
 ?>
 
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Link Extractor</title>
     <style media="screen">
-      html {
-        background: #EAE7D6;
-        font-family: sans-serif;
-      }
-      body {
-        margin: 0;
-      }
-      h1 {
-        padding: 10px;
-        margin: 0 auto;
-        color: #EAE7D6;
-        max-width: 600px;
-      }
-      h1 a {
-        text-decoration: none;
-        color: #EAE7D6;
-      }
-      h2 {
-        background: #082E41;
-        color: #EAE7D6;
-        margin: -10px;
-        padding: 10px;
-      }
-      p {
-        margin: 25px 5px 5px;
-      }
-      section {
-        max-width: 600px;
-        margin: 10px auto;
-        padding: 10px;
-        border: 1px solid #082E41;
-      }
-      div.header {
-        background: #082E41;
-        margin: 0;
-      }
-      div.footer {
-        background: #082E41;
-        margin: 0;
-        padding: 5px;
-      }
-      .footer p {
-        margin: 0 auto;
-        max-width: 600px;
-        color: #EAE7D6;
-        text-align: center;
-      }
-      .footer p a {
-        color: #24C2CB;
-        text-decoration: none;
-      }
-      .error {
-        color: #DA2536;
-      }
-      form {
-        display: flex;
-      }
-      input {
-        font-size: 20px;
-        padding: 3px;
-        height: 40px;
-      }
-      input.text {
-        box-sizing:border-box;
-        flex-grow: 1;
-        border-color: #082E41;
-      }
-      input.button {
-        width: 150px;
-        background: #082E41;
-        border-color: #082E41;
-        color: #EAE7D6;
-      }
-      table {
-        width: 100%;
-        text-align: left;
-        margin-top: 10px;
-      }
-      table th, table td {
-        padding: 3px;
-      }
-      table th:last-child, table td:last-child {
-        width: 70px;
-        text-align: right;
-      }
-      table th {
-        border-top: 1px solid #082E41;
-        border-bottom: 1px solid #082E41;
-      }
-      table tr:last-child td {
-        border-top: 1px solid #082E41;
-        border-bottom: 1px solid #082E41;
-      }
+        /* ... (tu estilo CSS actual) ... */
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="header">
-      <h1><a href="/">Link Extractor</a></h1>
+        <h1><a href="/">Link Extractor</a></h1>
     </div>
 
     <section>
-      <form action="/">
-        <input class="text" type="text" name="url" placeholder="http://example.com/" value="<?php echo $url; ?>">
-        <input class="button" type="submit" value="Extract Links">
-      </form>
+        <form action="/" method="post" enctype="multipart/form-data">
+            <input class="button" type="submit" value="Extract Links">
+            <input type="file" name="csv_file" accept=".csv">
+        </form>
     </section>
-    
-    <?php if(isset($err)): ?>
-      <section>
-        <h2>Error</h2>
-        <p class="error"><?php echo $err; ?></p>
-      </section>
+
+    <?php if ($err): ?>
+        <section>
+            <h2>Error</h2>
+            <p class="error"><?php echo $err; ?></p>
+        </section>
     <?php endif; ?>
 
-    <?php if($url != "" && !isset($err)): ?>
-      <section>
-        <h2>Summary</h2>
-        <p>
-          <strong>Page:</strong> <?php echo "<a href=\"" . $url . "\">" . $url . "</a>"; ?>
-        </p>
-        <table>
-          <tr>
-            <th>Domain</th>
-            <th># Links</th>
-          </tr>
-          <?php
-            foreach($domainct as $key => $value) {
-              echo "<tr>";
-              echo "<td>" . $key . "</td>";
-              echo "<td>" . $value . "</td>";
-              echo "</tr>";
-            }
-          ?>
-          <tr>
-            <td><strong>Total</strong></td>
-            <td><strong><?php echo count($links); ?></strong></td>
-          </tr>
-        </table>
-      </section>
-
-      <section>
-        <h2>Links</h2>
-        <ul>
-        <?php
-          foreach($links as $link) {
-            echo "<li><a href=\"" . $link["href"] . "\">" . $link["text"] . "</a></li>";
-          }
-        ?>
-        </ul>
-      </section>
+    <?php if (!empty($json_data) && ! $err): ?>
+        <section>
+            <h2>JSON Data</h2>
+            <pre><?php echo htmlspecialchars($json, ENT_QUOTES, 'UTF-8'); ?></pre>
+        </section>
     <?php endif; ?>
-
     <div class="footer">
-      <p><a href="https://github.com/ibnesayeed/linkextractor">Link Extractor</a> by <a href="https://twitter.com/ibnesayeed">@ibnesayeed</a> from
-        <a href="https://ws-dl.cs.odu.edu/">WS-DL, ODU</a>
-      </p>
+        <p><a href="https://github.com/ibnesayeed/linkextractor">Link Extractor</a> by <a
+                    href="https://twitter.com/ibnesayeed">@ibnesayeed</a> from
+            <a href="https://ws-dl.cs.odu.edu/">WS-DL, ODU</a>
+        </p>
     </div>
-  </body>
+</body>
 </html>
