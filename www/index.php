@@ -77,6 +77,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <pre><?php echo htmlspecialchars($json, ENT_QUOTES, 'UTF-8'); ?></pre>
         </section>
     <?php endif; ?>
+
+    <section>
+      <h2>Generate Plot</h2>
+      <p>Generate a plot from a CSV file:</p>
+      <form action="http://<tu-direccion-de-flask>:<puerto-flask>/api/generate_plot" method="post" enctype="multipart/form-data">
+          <label for="filename">CSV File:</label>
+          <input type="file" id="filename" name="filename" accept=".csv" required>
+          <input type="submit" value="Generate Plot">
+      </form>
+  </section>
+
     <div class="footer">
         <p><a href="https://github.com/ibnesayeed/linkextractor">Link Extractor</a> by <a
                     href="https://twitter.com/ibnesayeed">@ibnesayeed</a> from
