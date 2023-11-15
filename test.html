@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Plot Test</title>
+</head>
+<body>
+    <h1>Generate Plot Test</h1>
+    <form action="localhost:5000/api/generate_plot" method="post" enctype="multipart/form-data">
+        <label for="filename">CSV File:</label>
+        <input type="file" id="filename" name="filename" accept=".csv" required>
+        <input type="submit" value="Generate Plot">
+    </form>
+
+    <h2>Generated Plot</h2>
+    <img src="{{ img_path }}" alt="Generated Plot">
+</body>
+</html>
