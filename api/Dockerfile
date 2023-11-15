@@ -12,3 +12,4 @@ COPY       *.py /app/
 RUN        chmod a+x *.py
 
 CMD        ["./main.py"]
+EXPOSE     5000
